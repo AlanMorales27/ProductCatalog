@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import type { Product } from "./ProductsTable";
 import { FormField, inputBase, inputOk, inputErr } from "./FormField";
+import { createProduct } from "../api/createProduct";
+import { updateProduct } from "../api/updateProduct";
+import { ApiError } from "../api/config";
 
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
@@ -59,8 +62,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
     }, [open, product, reset]);
 
     const onSubmit: SubmitHandler<FormValues> = async (values) => {
-        const payload = {
-            id: product?.id ?? 0,
+        const input = {
             name: values.nombre.trim(),
             sku: values.sku.trim(),
             price: Number(values.precio),
@@ -69,27 +71,16 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
         };
 
         try {
-            const res = await fetch(
-                editing
-                    ? `http://localhost:5230/api/products/${product!.id}`
-                    : "http://localhost:5230/api/products",
-                {
-                    method: editing ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                }
-            );
-            if (!res.ok) {
-                if (res.status === 409) {
-                    setError("sku", { message: "Este SKU ya existe" });
-                    return;
-                }
-                throw new Error(`HTTP ${res.status}`);
-            }
-            const row = (await res.json()) as Product;
+            const row = editing
+                ? await updateProduct(product!.id, input)
+                : await createProduct(input);
             onSaved?.(row);
             onClose();
-        } catch {
+        } catch (err) {
+            if (err instanceof ApiError && err.status === 409) {
+                setError("sku", { message: "Este SKU ya existe" });
+                return;
+            }
             setError("root", {
                 message: editing ? "Error al guardar los cambios" : "Error al crear el producto",
             });

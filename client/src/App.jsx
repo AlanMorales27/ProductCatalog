@@ -3,6 +3,8 @@ import './App.css'
 import { ProductsTable } from './components/ProductsTable'
 import { NewProductForm } from './components/NewProductForm'
 import { SearchInput } from './components/SearchInput'
+import { getProducts } from './api/getProducts'
+import { deleteProduct } from './api/deleteProduct'
 
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -22,11 +24,7 @@ function App() {
     const controller = new AbortController()
     setLoading(true)
     setError(null)
-    fetch("http://localhost:5230/api/products", { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return await res.json()
-      })
+    getProducts(controller.signal)
       .then(setProducts)
       .catch((err) => {
         if (err.name !== "AbortError") setError(err.message)
@@ -44,8 +42,7 @@ function App() {
   const handleDelete = async (p) => {
     if (!window.confirm(`¿Borrar "${p.name}"?`)) return
     try {
-      const res = await fetch(`http://localhost:5230/api/products/${p.id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await deleteProduct(p.id)
       fetchProducts()
     } catch {
       window.alert("No se pudo borrar el producto")
