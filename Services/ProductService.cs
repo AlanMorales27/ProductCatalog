@@ -21,6 +21,15 @@ namespace Product.Services
         
         public async Task<Product> CreateProductAsync(Product product)
         {
+            var skuExists = await _context.Products.AnyAsync(p => p.SKU == product.SKU);
+
+            if (skuExists)
+            {
+                throw new InvalidOperationException(
+                    $"Ya existe un producto con el SKU '{product.SKU}'"
+                );
+            }
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
             return product;
