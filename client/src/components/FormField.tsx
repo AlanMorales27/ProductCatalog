@@ -9,7 +9,7 @@ type FormFieldProps = {
 };
 
 export const inputBase =
-    "w-full h-9 px-3 bg-white border rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-[#5b5be0] focus:shadow-[0_0_0_3px_rgba(91,91,224,0.18)]";
+    "w-full h-9 px-3 bg-white border rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-[#5b5be0] focus:shadow-[0_0_0_3px_rgba(91,91,224,0.18)] placeholder-gray-400 ";
 export const inputOk = "border-[#e8e4dc]";
 export const inputErr =
     "border-[#c4423a] focus:border-[#c4423a] focus:shadow-[0_0_0_3px_rgba(196,66,58,0.16)]";

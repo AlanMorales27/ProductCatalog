@@ -8,7 +8,8 @@ export async function updateProduct(id: number, input: Omit<Product, "id">): Pro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ...input }),
     });
-    
+
     if (!res.ok) throw new ApiError(res.status);
+    
     return (await res.json()) as Product;
 }

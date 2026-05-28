@@ -5,8 +5,10 @@ import { NewProductForm } from './components/NewProductForm'
 import { SearchInput } from './components/SearchInput'
 import { getProducts } from './api/getProducts'
 import { deleteProduct } from './api/deleteProduct'
+import { useToast } from './components/ToastStack'
 
 function App() {
+  const pushToast = useToast()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [products, setProducts] = useState([])
@@ -43,9 +45,10 @@ function App() {
     if (!window.confirm(`¿Borrar "${p.name}"?`)) return
     try {
       await deleteProduct(p.id)
+      pushToast({ kind: "success", msg: `Producto «${p.name}» eliminado` })
       fetchProducts()
     } catch {
-      window.alert("No se pudo borrar el producto")
+      pushToast({ kind: "error", msg: "No se pudo borrar el producto" })
     }
   }
 

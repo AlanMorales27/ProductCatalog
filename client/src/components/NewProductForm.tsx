@@ -5,6 +5,7 @@ import { FormField, inputBase, inputOk, inputErr } from "./FormField";
 import { createProduct } from "../api/createProduct";
 import { updateProduct } from "../api/updateProduct";
 import { ApiError } from "../api/config";
+import { useToast } from "./ToastStack";
 
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
@@ -39,6 +40,7 @@ function fromProduct(p: Product): FormValues {
 export function NewProductForm({ open, onClose, onSaved, product }: Props) {
     const editing = !!product;
     const firstInput = useRef<HTMLInputElement | null>(null);
+    const pushToast = useToast();
     const {
         register,
         handleSubmit,
@@ -74,16 +76,23 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
             const row = editing
                 ? await updateProduct(product!.id, input)
                 : await createProduct(input);
+            pushToast({
+                kind: "success",
+                msg: editing
+                    ? `Producto «${row.name}» actualizado`
+                    : `Producto «${row.name}» creado`,
+            });
             onSaved?.(row);
             onClose();
         } catch (err) {
             if (err instanceof ApiError && err.status === 409) {
                 setError("sku", { message: "Este SKU ya existe" });
+                pushToast({ kind: "error", msg: "No se pudo guardar: SKU duplicado" });
                 return;
             }
-            setError("root", {
-                message: editing ? "Error al guardar los cambios" : "Error al crear el producto",
-            });
+            const msg = editing ? "Error al guardar los cambios" : "Error al crear el producto";
+            setError("root", { message: msg });
+            pushToast({ kind: "error", msg });
         }
     };
 
@@ -141,13 +150,13 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 {...register("sku", {
                                     required: "El SKU es requerido",
                                     pattern: {
-                                        value: /^[A-Za-z0-9\-_]+$/,
-                                        message: "Solo letras, números, guiones y guiones bajos",
+                                        value: /^[A-Za-z0-9]+$/,
+                                        message: "Solo letras y números",
                                     },
                                     onChange: (e) => setValue("sku", e.target.value.toUpperCase()),
                                 })}
                                 type="text"
-                                placeholder="POL-LIN-001"
+                                placeholder="POLLIN001"
                                 maxLength={32}
                                 className={`${inputBase} font-mono text-[13px] ${errors.sku ? inputErr : inputOk}`}
                             />
