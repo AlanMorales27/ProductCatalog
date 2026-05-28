@@ -118,8 +118,6 @@ Normaliza cada SKU eliminando guiones, espacios y diferencias de capitalización
 
 Un resultado vacío `{}` indica que no hay duplicados potenciales.
 
-> Para detección avanzada con similitud configurable, análisis de partes del SKU (prefijo/variante/secuencia) e interfaz de línea de comandos, ver [detect_duplicate_skus.py](detect_duplicate_skus.py).
-
 ---
 
 ## Estructura del proyecto
