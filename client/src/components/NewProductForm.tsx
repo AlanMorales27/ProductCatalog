@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import type { Product } from "./ProductsTable";
+import { FormField, inputBase, inputOk, inputErr } from "./FormField";
+
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
 
@@ -94,11 +96,6 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
         }
     };
 
-    const inputBase =
-        "w-full h-9 px-3 bg-white border rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-[#5b5be0] focus:shadow-[0_0_0_3px_rgba(91,91,224,0.18)]";
-    const inputOk = "border-[#e8e4dc]";
-    const inputErr = "border-[#c4423a] focus:border-[#c4423a] focus:shadow-[0_0_0_3px_rgba(196,66,58,0.16)]";
-
     return (
         <>
             {/* Backdrop */}
@@ -137,11 +134,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                 {/* Body */}
                 <div className="px-6 py-5 overflow-y-auto flex-1">
                     <form id="new-product-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                        {/* Nombre */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                Nombre <span className="text-[#5b5be0] font-medium">*</span>
-                            </label>
+                        <FormField label="Nombre" required error={errors.nombre?.message}>
                             <input
                                 {...nombreReg}
                                 ref={(el) => { nombreRef(el); firstInput.current = el; }}
@@ -150,19 +143,9 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 maxLength={80}
                                 className={`${inputBase} ${errors.nombre ? inputErr : inputOk}`}
                             />
-                            {errors.nombre && (
-                                <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                    {errors.nombre.message}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        {/* SKU */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                SKU <span className="text-[#5b5be0] font-medium">*</span>
-                                <span className="text-[#97948a] font-normal text-[12.5px]">único</span>
-                            </label>
+                        <FormField label="SKU" required hint="único" error={errors.sku?.message}>
                             <input
                                 {...register("sku", {
                                     required: "El SKU es requerido",
@@ -177,19 +160,10 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 maxLength={32}
                                 className={`${inputBase} font-mono text-[13px] ${errors.sku ? inputErr : inputOk}`}
                             />
-                            {errors.sku && (
-                                <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                    {errors.sku.message}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        {/* Precio + Stock */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="mb-4">
-                                <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                    Precio <span className="text-[#5b5be0] font-medium">*</span>
-                                </label>
+                            <FormField label="Precio" required error={errors.precio?.message}>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#97948a] text-[13px] pointer-events-none tabular-nums">$</span>
                                     <input
@@ -210,17 +184,9 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                         className={`${inputBase} pl-[26px] ${errors.precio ? inputErr : inputOk}`}
                                     />
                                 </div>
-                                {errors.precio && (
-                                    <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                        {errors.precio.message}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="mb-4">
-                                <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                    Stock <span className="text-[#5b5be0] font-medium">*</span>
-                                </label>
+                            <FormField label="Stock" required error={errors.stock?.message}>
                                 <input
                                     {...register("stock", {
                                         required: "Ingresa el stock",
@@ -239,19 +205,10 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                     placeholder="0"
                                     className={`${inputBase} ${errors.stock ? inputErr : inputOk}`}
                                 />
-                                {errors.stock && (
-                                    <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                        {errors.stock.message}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
                         </div>
 
-                        {/* Categoría */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                Categoría
-                            </label>
+                        <FormField label="Categoría">
                             <select
                                 {...register("categoria")}
                                 className={`${inputBase} ${inputOk}`}
@@ -259,7 +216,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 <option value="">— Sin categoría —</option>
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                        </div>
+                        </FormField>
 
                         {errors.root && (
                             <p className="mt-2 text-[12.5px] text-[#c4423a]">{errors.root.message}</p>
