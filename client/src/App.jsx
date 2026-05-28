@@ -47,8 +47,8 @@ function App() {
       await deleteProduct(p.id)
       pushToast({ kind: "success", msg: `Producto «${p.name}» eliminado` })
       fetchProducts()
-    } catch {
-      pushToast({ kind: "error", msg: "No se pudo borrar el producto" })
+    } catch (err) {
+      pushToast({ kind: "error", msg: err?.message || "No se pudo borrar el producto" })
     }
   }
 

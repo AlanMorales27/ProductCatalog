@@ -85,12 +85,14 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
             onSaved?.(row);
             onClose();
         } catch (err) {
+            const fallback = editing ? "Error al guardar los cambios" : "Error al crear el producto";
+            const msg = err instanceof ApiError ? err.message : fallback;
+
             if (err instanceof ApiError && err.status === 409) {
-                setError("sku", { message: "Este SKU ya existe" });
-                pushToast({ kind: "error", msg: "No se pudo guardar: SKU duplicado" });
+                setError("sku", { message: msg });
+                pushToast({ kind: "error", msg });
                 return;
             }
-            const msg = editing ? "Error al guardar los cambios" : "Error al crear el producto";
             setError("root", { message: msg });
             pushToast({ kind: "error", msg });
         }

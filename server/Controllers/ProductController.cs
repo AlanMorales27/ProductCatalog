@@ -35,25 +35,13 @@ using Microsoft.AspNetCore.Mvc;
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
         {
-            try
-            {
-                var created = await _service.CreateProductAsync(product);
+            var created = await _service.CreateProductAsync(product);
 
-                return CreatedAtAction(
-                    nameof(GetProductById),
-                    new { id = created.Id },
-                    created
-                );
-            }
-            catch (DuplicateSkuException ex)
-            {
-                return Conflict(new ProblemDetails
-                {
-                    Status = StatusCodes.Status409Conflict,
-                    Title = "SKU duplicado",
-                    Detail = ex.Message,
-                });
-            }
+            return CreatedAtAction(
+                nameof(GetProductById),
+                new { id = created.Id },
+                created
+            );
         }
 
         [HttpPut("{id}")]
