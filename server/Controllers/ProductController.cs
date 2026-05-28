@@ -33,9 +33,9 @@ using Microsoft.AspNetCore.Mvc;
 
 
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
+        public async Task<ActionResult<Product>> CreateProduct([FromBody] CreateProductDto dto)
         {
-            var created = await _service.CreateProductAsync(product);
+            var created = await _service.CreateProductAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetProductById),
@@ -46,11 +46,11 @@ using Microsoft.AspNetCore.Mvc;
 
         [HttpPut("{id}")]
         public async Task<ActionResult<Product>> UpdateProduct(
-            [FromRoute] int id, 
-            [FromBody] Product product
+            [FromRoute] int id,
+            [FromBody] UpdateProductDto dto
         )
         {
-            var updated = await _service.UpdateProductAsync(id, product);
+            var updated = await _service.UpdateProductAsync(id, dto);
 
             if (updated is null) return NotFound();
 
