@@ -48,6 +48,13 @@ public class ProductService
         var existingProduct = await _context.Products.FindAsync(id);
         if (existingProduct is null) return null;
 
+        var skuTaken = await _context.Products.AnyAsync(p => p.SKU == dto.SKU && p.Id != id);
+
+        if (skuTaken)
+        { 
+            throw new DuplicateSkuException(dto.SKU); 
+        };
+        
         existingProduct.Name = dto.Name;
         existingProduct.Price = dto.Price;
         existingProduct.Stock = dto.Stock;
