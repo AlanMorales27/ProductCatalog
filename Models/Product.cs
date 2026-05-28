@@ -23,7 +23,7 @@ public class Product
         0, double.MaxValue, 
         ErrorMessage = "El precio debe ser mayor o igual a 0"
     )]
-    public decimal Price { get; set; }
+    public decimal Price { get; set; } = 0;
 
     [Range(
         0, int.MaxValue,
