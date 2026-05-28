@@ -1,7 +1,7 @@
 
 
-namespace ProductCatalog.Controllers
-{
+using Microsoft.AspNetCore.Mvc;
+
     [ApiController]
     [Route("api/products")]
     public class ProductController: ControllerBase
@@ -62,11 +62,10 @@ namespace ProductCatalog.Controllers
         {
             var deleted = await _service.DeleteProductAsync(id);
 
-            if (deleted is null) return NotFound();
+            if (deleted is false) return NotFound();
 
             return Ok(deleted);
         }
 
     }
 
-}

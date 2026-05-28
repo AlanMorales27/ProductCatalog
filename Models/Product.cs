@@ -2,11 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 public enum ProductCategory
 {
-    Electronics,
-    Clothing,
-    HomeGoods,
-    Books,
-    Toys
+    Camisetas,
+    Pantalones,
+    Vestidos,
+    Chaquetas,
+    Blusas
 }
 
 public class Product

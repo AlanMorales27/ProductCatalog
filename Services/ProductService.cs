@@ -1,62 +1,63 @@
-namespace Product.Services
+using Microsoft.EntityFrameworkCore;
+
+
+public class ProductService
 {
-    public class ProductService
+    private readonly AppDbContext _context;
+
+    public ProductService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
+        _context = context;
+    }
 
-        public ProductService(AppDbContext context)
+    public async Task<List<Product>> GetProductsAsync()
+    {
+        return await _context.Products.ToListAsync();
+    }
+
+    public async Task<Product?> GetProductByIdAsync(int id)
+    {
+        return await _context.Products.FindAsync(id);
+    }
+
+    public async Task<Product> CreateProductAsync(Product product)
+    {
+        var skuExists = await _context.Products.AnyAsync(p => p.SKU == product.SKU);
+
+        if (skuExists)
         {
-            _context = context;
+            throw new InvalidOperationException(
+                $"Ya existe un producto con el SKU '{product.SKU}'"
+            );
         }
 
-        public async Task<List<Product>> GetProductsAsync()
-        {
-            return await _context.Products.ToListAsync();
-        }
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+        return product;
+    }
 
-        public async Task<Product?> GetProductByIdAsync(int id)
-        {
-            return await _context.Products.FindAsync(id);
-        }
-        
-        public async Task<Product> CreateProductAsync(Product product)
-        {
-            var skuExists = await _context.Products.AnyAsync(p => p.SKU == product.SKU);
+    public async Task<Product?> UpdateProductAsync(int id, Product product)
+    {
+        var existingProduct = await _context.Products.FindAsync(id);
+        if (existingProduct is null) return null;
 
-            if (skuExists)
-            {
-                throw new InvalidOperationException(
-                    $"Ya existe un producto con el SKU '{product.SKU}'"
-                );
-            }
+        existingProduct.Name = product.Name;
+        existingProduct.Price = product.Price;
+        existingProduct.Stock = product.Stock;
+        existingProduct.SKU = product.SKU;
+        existingProduct.Category = product.Category;
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            return product;
-        }
+        await _context.SaveChangesAsync();
+        return existingProduct;
+    }
 
-        public async Task<Product?> UpdateProductAsync(int id, Product product)
-        {
-            var existingProduct = await _context.Products.FindAsync(id);
-            if (existingProduct is null) return null;
+    public async Task<bool> DeleteProductAsync(int id)
+    {
+        var existingProduct = await _context.Products.FindAsync(id);
+        if (existingProduct is null) return false;
 
-            existingProduct.Name = product.Name;
-            existingProduct.Description = product.Description;
-            existingProduct.Price = product.Price;
-            existingProduct.Stock = product.Stock;
-
-            await _context.SaveChangesAsync();
-            return existingProduct;
-        }
-
-        public async Task<bool> DeleteProductAsync(int id)
-        {
-            var existingProduct = await _context.Products.FindAsync(id);
-            if (existingProduct is null) return false;
-
-            _context.Products.Remove(existingProduct);
-            await _context.SaveChangesAsync();
-            return true;
-        }
+        _context.Products.Remove(existingProduct);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
