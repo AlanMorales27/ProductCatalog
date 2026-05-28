@@ -20,7 +20,11 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         if (status == StatusCodes.Status500InternalServerError)
         {
-            _logger.LogError(exception, "Unhandled exception while processing {Path}", httpContext.Request.Path);
+            _logger.LogError(
+                exception, 
+                "Unhandled exception while processing {Path}", 
+                httpContext.Request.Path
+            );
         }
 
         var problem = new ProblemDetails

@@ -5,7 +5,7 @@ import { FormField, inputBase, inputOk, inputErr } from "./FormField";
 import { createProduct } from "../api/createProduct";
 import { updateProduct } from "../api/updateProduct";
 import { ApiError } from "../api/config";
-import { useToast } from "./ToastStack";
+import { useToast } from "../hooks/useToast";
 
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
