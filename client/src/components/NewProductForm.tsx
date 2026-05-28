@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import type { Product } from "./ProductsTable";
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
 
@@ -11,24 +12,27 @@ type FormValues = {
     categoria: "" | (typeof CATEGORIES)[number];
 };
 
-type CreatedProduct = {
-    id: number;
-    name: string;
-    sku: string;
-    price: number;
-    stock: number;
-    category: number;
-};
-
 type Props = {
     open: boolean;
     onClose: () => void;
-    onCreated?: (row: CreatedProduct) => void;
+    onSaved?: (row: Product) => void;
+    product?: Product | null;
 };
 
 const DEFAULTS: FormValues = { nombre: "", sku: "", precio: "", stock: "", categoria: "" };
 
-export function NewProductForm({ open, onClose, onCreated }: Props) {
+function fromProduct(p: Product): FormValues {
+    return {
+        nombre: p.name,
+        sku: p.sku,
+        precio: String(p.price),
+        stock: String(p.stock),
+        categoria: (CATEGORIES[p.category] ?? "") as FormValues["categoria"],
+    };
+}
+
+export function NewProductForm({ open, onClose, onSaved, product }: Props) {
+    const editing = !!product;
     const firstInput = useRef<HTMLInputElement | null>(null);
     const {
         register,
@@ -46,14 +50,15 @@ export function NewProductForm({ open, onClose, onCreated }: Props) {
 
     useEffect(() => {
         if (open) {
-            reset(DEFAULTS);
+            reset(product ? fromProduct(product) : DEFAULTS);
             const t = setTimeout(() => firstInput.current?.focus(), 280);
             return () => clearTimeout(t);
         }
-    }, [open, reset]);
+    }, [open, product, reset]);
 
     const onSubmit: SubmitHandler<FormValues> = async (values) => {
         const payload = {
+            id: product?.id ?? 0,
             name: values.nombre.trim(),
             sku: values.sku.trim(),
             price: Number(values.precio),
@@ -62,11 +67,16 @@ export function NewProductForm({ open, onClose, onCreated }: Props) {
         };
 
         try {
-            const res = await fetch("http://localhost:5230/api/products", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
+            const res = await fetch(
+                editing
+                    ? `http://localhost:5230/api/products/${product!.id}`
+                    : "http://localhost:5230/api/products",
+                {
+                    method: editing ? "PUT" : "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                }
+            );
             if (!res.ok) {
                 if (res.status === 409) {
                     setError("sku", { message: "Este SKU ya existe" });
@@ -74,11 +84,13 @@ export function NewProductForm({ open, onClose, onCreated }: Props) {
                 }
                 throw new Error(`HTTP ${res.status}`);
             }
-            const row = (await res.json()) as CreatedProduct;
-            onCreated?.(row);
+            const row = (await res.json()) as Product;
+            onSaved?.(row);
             onClose();
         } catch {
-            setError("root", { message: "Error al crear el producto" });
+            setError("root", {
+                message: editing ? "Error al guardar los cambios" : "Error al crear el producto",
+            });
         }
     };
 
@@ -110,7 +122,7 @@ export function NewProductForm({ open, onClose, onCreated }: Props) {
             >
                 {/* Header */}
                 <header className="px-6 py-5 border-b border-[#e8e4dc] flex items-center justify-between">
-                    <h2 className="text-base font-semibold tracking-tight m-0">Nuevo producto</h2>
+                    <h2 className="text-base font-semibold tracking-tight m-0">{editing ? "Editar producto" : "Nuevo producto"}</h2>
                     <button
                         type="button"
                         onClick={onClose}
@@ -274,7 +286,9 @@ export function NewProductForm({ open, onClose, onCreated }: Props) {
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg font-medium text-sm bg-[#5b5be0] text-white shadow-[0_1px_2px_rgba(28,27,24,0.08),inset_0_1px_0_rgba(255,255,255,0.12)] hover:bg-[#4747c7] disabled:opacity-55 disabled:cursor-not-allowed transition-colors"
                     >
-                        {isSubmitting ? "Creando…" : "Crear producto"}
+                        {isSubmitting
+                            ? (editing ? "Guardando…" : "Creando…")
+                            : (editing ? "Guardar cambios" : "Crear producto")}
                     </button>
                 </footer>
             </aside>
