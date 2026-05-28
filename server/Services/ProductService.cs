@@ -26,9 +26,7 @@ public class ProductService
 
         if (skuExists)
         {
-            throw new InvalidOperationException(
-                $"Ya existe un producto con el SKU '{product.SKU}'"
-            );
+            throw new DuplicateSkuException(product.SKU);
         }
 
         _context.Products.Add(product);
