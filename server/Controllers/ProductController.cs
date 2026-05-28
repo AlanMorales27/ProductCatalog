@@ -38,8 +38,8 @@ using Microsoft.AspNetCore.Mvc;
             var created = await _service.CreateProductAsync(product);
 
             return CreatedAtAction(
-                nameof(GetProductById), 
-                new { id = created.Id }, 
+                nameof(GetProductById),
+                new { id = created.Id },
                 created
             );
         }

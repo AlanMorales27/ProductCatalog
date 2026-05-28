@@ -1,64 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 import { ProductsTable } from './components/ProductsTable'
 import { NewProductForm } from './components/NewProductForm'
 import { SearchInput } from './components/SearchInput'
+import { useToast } from './hooks/useToast'
+import { useProducts } from './hooks/useProducts'
+import { useSearch } from './hooks/useSearch'
 
 function App() {
+  const pushToast = useToast()
+  const { products, loading, error, fetchProducts, handleDelete } = useProducts(pushToast)
+  const { query, setQuery, filtered, debounced } = useSearch(products)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [query, setQuery] = useState("")
-  const [debounced, setDebounced] = useState("")
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(query), 220)
-    return () => clearTimeout(id)
-  }, [query])
-
-  const fetchProducts = useCallback(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError(null)
-    fetch("http://localhost:5230/api/products", { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return await res.json()
-      })
-      .then(setProducts)
-      .catch((err) => {
-        if (err.name !== "AbortError") setError(err.message)
-      })
-      .finally(() => setLoading(false))
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => fetchProducts(), [fetchProducts])
 
   const openCreate = () => { setEditing(null); setDrawerOpen(true) }
   const openEdit = (p) => { setEditing(p); setDrawerOpen(true) }
   const closeForm = () => { setDrawerOpen(false); setEditing(null) }
-
-  const handleDelete = async (p) => {
-    if (!window.confirm(`¿Borrar "${p.name}"?`)) return
-    try {
-      const res = await fetch(`http://localhost:5230/api/products/${p.id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      fetchProducts()
-    } catch {
-      window.alert("No se pudo borrar el producto")
-    }
-  }
-
-  const filtered = useMemo(() => {
-    const q = debounced.trim().toLowerCase()
-    if (!q) return products
-    return products.filter(p =>
-      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
-    )
-  }, [products, debounced])
 
   const total = filtered.length
   const countLabel = loading

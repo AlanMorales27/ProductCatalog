@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import type { Product } from "./ProductsTable";
+import { FormField, inputBase, inputOk, inputErr } from "./FormField";
+import { createProduct } from "../api/createProduct";
+import { updateProduct } from "../api/updateProduct";
+import { ApiError } from "../api/config";
+import { useToast } from "../hooks/useToast";
+
 
 const CATEGORIES = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"] as const;
 
@@ -34,6 +40,7 @@ function fromProduct(p: Product): FormValues {
 export function NewProductForm({ open, onClose, onSaved, product }: Props) {
     const editing = !!product;
     const firstInput = useRef<HTMLInputElement | null>(null);
+    const pushToast = useToast();
     const {
         register,
         handleSubmit,
@@ -57,8 +64,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
     }, [open, product, reset]);
 
     const onSubmit: SubmitHandler<FormValues> = async (values) => {
-        const payload = {
-            id: product?.id ?? 0,
+        const input = {
             name: values.nombre.trim(),
             sku: values.sku.trim(),
             price: Number(values.precio),
@@ -67,37 +73,30 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
         };
 
         try {
-            const res = await fetch(
-                editing
-                    ? `http://localhost:5230/api/products/${product!.id}`
-                    : "http://localhost:5230/api/products",
-                {
-                    method: editing ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                }
-            );
-            if (!res.ok) {
-                if (res.status === 409) {
-                    setError("sku", { message: "Este SKU ya existe" });
-                    return;
-                }
-                throw new Error(`HTTP ${res.status}`);
-            }
-            const row = (await res.json()) as Product;
+            const row = editing
+                ? await updateProduct(product!.id, input)
+                : await createProduct(input);
+            pushToast({
+                kind: "success",
+                msg: editing
+                    ? `Producto «${row.name}» actualizado`
+                    : `Producto «${row.name}» creado`,
+            });
             onSaved?.(row);
             onClose();
-        } catch {
-            setError("root", {
-                message: editing ? "Error al guardar los cambios" : "Error al crear el producto",
-            });
+        } catch (err) {
+            const fallback = editing ? "Error al guardar los cambios" : "Error al crear el producto";
+            const msg = err instanceof ApiError ? err.message : fallback;
+
+            if (err instanceof ApiError && err.status === 409) {
+                setError("sku", { message: msg });
+                pushToast({ kind: "error", msg });
+                return;
+            }
+            setError("root", { message: msg });
+            pushToast({ kind: "error", msg });
         }
     };
-
-    const inputBase =
-        "w-full h-9 px-3 bg-white border rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-[#5b5be0] focus:shadow-[0_0_0_3px_rgba(91,91,224,0.18)]";
-    const inputOk = "border-[#e8e4dc]";
-    const inputErr = "border-[#c4423a] focus:border-[#c4423a] focus:shadow-[0_0_0_3px_rgba(196,66,58,0.16)]";
 
     return (
         <>
@@ -137,11 +136,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                 {/* Body */}
                 <div className="px-6 py-5 overflow-y-auto flex-1">
                     <form id="new-product-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                        {/* Nombre */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                Nombre <span className="text-[#5b5be0] font-medium">*</span>
-                            </label>
+                        <FormField label="Nombre" required error={errors.nombre?.message}>
                             <input
                                 {...nombreReg}
                                 ref={(el) => { nombreRef(el); firstInput.current = el; }}
@@ -150,46 +145,27 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 maxLength={80}
                                 className={`${inputBase} ${errors.nombre ? inputErr : inputOk}`}
                             />
-                            {errors.nombre && (
-                                <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                    {errors.nombre.message}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        {/* SKU */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                SKU <span className="text-[#5b5be0] font-medium">*</span>
-                                <span className="text-[#97948a] font-normal text-[12.5px]">único</span>
-                            </label>
+                        <FormField label="SKU" required hint="único" error={errors.sku?.message}>
                             <input
                                 {...register("sku", {
                                     required: "El SKU es requerido",
                                     pattern: {
-                                        value: /^[A-Za-z0-9\-_]+$/,
-                                        message: "Solo letras, números, guiones y guiones bajos",
+                                        value: /^[A-Za-z0-9]+$/,
+                                        message: "Solo letras y números",
                                     },
                                     onChange: (e) => setValue("sku", e.target.value.toUpperCase()),
                                 })}
                                 type="text"
-                                placeholder="POL-LIN-001"
+                                placeholder="POLLIN001"
                                 maxLength={32}
                                 className={`${inputBase} font-mono text-[13px] ${errors.sku ? inputErr : inputOk}`}
                             />
-                            {errors.sku && (
-                                <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                    {errors.sku.message}
-                                </p>
-                            )}
-                        </div>
+                        </FormField>
 
-                        {/* Precio + Stock */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="mb-4">
-                                <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                    Precio <span className="text-[#5b5be0] font-medium">*</span>
-                                </label>
+                            <FormField label="Precio" required error={errors.precio?.message}>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#97948a] text-[13px] pointer-events-none tabular-nums">$</span>
                                     <input
@@ -210,17 +186,9 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                         className={`${inputBase} pl-[26px] ${errors.precio ? inputErr : inputOk}`}
                                     />
                                 </div>
-                                {errors.precio && (
-                                    <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                        {errors.precio.message}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
 
-                            <div className="mb-4">
-                                <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                    Stock <span className="text-[#5b5be0] font-medium">*</span>
-                                </label>
+                            <FormField label="Stock" required error={errors.stock?.message}>
                                 <input
                                     {...register("stock", {
                                         required: "Ingresa el stock",
@@ -239,19 +207,10 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                     placeholder="0"
                                     className={`${inputBase} ${errors.stock ? inputErr : inputOk}`}
                                 />
-                                {errors.stock && (
-                                    <p className="flex items-center gap-1.5 mt-1.5 text-[12.5px] text-[#c4423a]">
-                                        {errors.stock.message}
-                                    </p>
-                                )}
-                            </div>
+                            </FormField>
                         </div>
 
-                        {/* Categoría */}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-1.5 text-[13px] font-medium text-[#1c1b18] mb-1.5">
-                                Categoría
-                            </label>
+                        <FormField label="Categoría">
                             <select
                                 {...register("categoria")}
                                 className={`${inputBase} ${inputOk}`}
@@ -259,7 +218,7 @@ export function NewProductForm({ open, onClose, onSaved, product }: Props) {
                                 <option value="">— Sin categoría —</option>
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                        </div>
+                        </FormField>
 
                         {errors.root && (
                             <p className="mt-2 text-[12.5px] text-[#c4423a]">{errors.root.message}</p>

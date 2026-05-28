@@ -9,6 +9,12 @@ export type Product = {
 
 const CATEGORY_LABELS = ["Camisetas", "Pantalones", "Vestidos", "Chaquetas", "Blusas"];
 
+const copFormatter = new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+});
+
 type Props = {
     products: Product[];
     loading: boolean;
@@ -73,7 +79,7 @@ export function ProductsTable({ products, loading, error, hasQuery, onClearQuery
                                     {CATEGORY_LABELS[p.category] ?? "—"}
                                 </span>
                             </td>
-                            <td className="px-4 py-3 border-b border-[#e8e4dc] align-middle text-sm tabular-nums text-right">{p.price}</td>
+                            <td className="px-4 py-3 border-b border-[#e8e4dc] align-middle text-sm tabular-nums text-right">{copFormatter.format(p.price)}</td>
                             <td className={"px-4 py-3 border-b border-[#e8e4dc] align-middle text-sm tabular-nums text-right " + (p.stock === 0 ? "text-[#97948a]" : p.stock <= 5 ? "text-[#c4423a] font-medium" : "")}>
                                 {p.stock}
                             </td>
