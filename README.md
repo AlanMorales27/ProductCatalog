@@ -82,6 +82,46 @@ La aplicación quedará disponible en `http://localhost:5173`.
 
 ---
 
+## Bonus: Detección de SKUs duplicados
+
+Script Python que detecta SKUs potencialmente duplicados por normalización de formato (guiones, espacios, mayúsculas).
+
+### Requisito previo
+
+Python 3.10+ (sin dependencias externas).
+
+### Uso
+
+```python
+python bonus_duplicate_skus.py
+```
+
+El script incluye un ejemplo de prueba al final del archivo. Para probarlo con tu propia lista, edita la llamada en la última línea:
+
+```python
+# Ejemplo incluido:
+print(find_potential_duplicates(['SFALTA001', 'SFA-LTA-001']))
+
+# Con tu propia lista:
+print(find_potential_duplicates(['CAMBAS001', 'CAM-BAS-001', 'PRODX999', 'PROD-X-999']))
+```
+
+### Cómo funciona
+
+Normaliza cada SKU eliminando guiones, espacios y diferencias de capitalización, luego agrupa los que resulten idénticos tras la normalización. Retorna un diccionario donde la clave es el SKU normalizado y el valor es la lista de SKUs originales que colisionan.
+
+**Ejemplo de salida:**
+
+```
+{'sfalta001': ['SFALTA001', 'SFA-LTA-001']}
+```
+
+Un resultado vacío `{}` indica que no hay duplicados potenciales.
+
+> Para detección avanzada con similitud configurable, análisis de partes del SKU (prefijo/variante/secuencia) e interfaz de línea de comandos, ver [detect_duplicate_skus.py](detect_duplicate_skus.py).
+
+---
+
 ## Estructura del proyecto
 
 ```
